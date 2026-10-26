@@ -7,6 +7,13 @@ kustomize build upstream/base/crds | kubectl apply --server-side --force-conflic
 sleep 5
 kubectl wait --for condition=established crd/trainjobs.trainer.kubeflow.org --timeout=60s
 
+# The OptimizationJob CRD (KEP-3562) ships with Kubeflow Trainer v2.4. Wait for it to
+# be established only when the synchronized manifests already provide it, so this
+# script keeps working against earlier Trainer releases that do not define it.
+if kubectl get crd optimizationjobs.trainer.kubeflow.org >/dev/null 2>&1; then
+    kubectl wait --for condition=established crd/optimizationjobs.trainer.kubeflow.org --timeout=60s
+fi
+
 kustomize build overlays | kubectl apply --server-side --force-conflicts -f -
 kubectl wait --for=condition=Available deployment/kubeflow-trainer-controller-manager -n kubeflow-system --timeout=240s
 kubectl get crd jobsets.jobset.x-k8s.io

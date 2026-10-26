@@ -26,7 +26,10 @@ env:
 jobs:
   trainer_test:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # The OptimizationJob validation (Trainer v2.4 onwards) additionally provisions
+    # an Optuna search-algorithm Deployment and a trial TrainJob, so the job needs
+    # more headroom than the TrainJob-only path.
+    timeout-minutes: 35
     steps:
     - name: Checkout
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -66,6 +69,10 @@ jobs:
         kubectl get crd trainjobs.trainer.kubeflow.org
         kubectl get crd clustertrainingruntimes.trainer.kubeflow.org
         kubectl get crd trainingruntimes.trainer.kubeflow.org
+        # The OptimizationJob CRD (KEP-3562) is present from Kubeflow Trainer v2.4 onwards.
+        if kubectl get crd optimizationjobs.trainer.kubeflow.org >/dev/null 2>&1; then
+          kubectl get crd optimizationjobs.trainer.kubeflow.org
+        fi
 
 
     - name: Port-forward the istio-ingress gateway
